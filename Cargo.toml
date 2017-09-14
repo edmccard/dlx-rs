@@ -2,5 +2,13 @@
 name = "dlx"
 version = "0.1.0"
 authors = ["Ed McCardell <edmccard@hotmail.com>"]
+description = """
+An implementation of Knuth's 'Dancing Links' algorithm for solving
+exact cover problems.
+"""
+repository = "https://github.com/edmccard/dlx-rs"
+keywords = ["exact-cover", "dancing-links"]
+categories = ["algorithms"]
+license = "MIT/Apache-2.0"
 
 [dependencies]
