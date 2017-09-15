@@ -11,4 +11,5 @@ keywords = ["exact-cover", "dancing-links"]
 categories = ["algorithms"]
 license = "MIT/Apache-2.0"
 
-[dependencies]
+[dev-dependencies]
+lazy_static = "0.2.8"

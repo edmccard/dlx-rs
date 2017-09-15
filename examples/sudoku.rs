@@ -112,8 +112,8 @@ impl dlx::Solutions for Solutions {
     /// Print the first solution and stop.
     fn push(&mut self, sol: dlx::Solution) -> bool {
         self.solved = true;
-        /// Convert the rows from the exact cover matrix into a
-        /// standard sudoku grid.
+        // Convert the rows from the exact cover matrix into a
+        // standard sudoku grid.
         let mut grid = vec![b'0'; SIZE_SQ];
         for row in sol {
             let cell_row = row[0] / SIZE;

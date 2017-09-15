@@ -1,3 +1,8 @@
+#[cfg(test)]
+#[macro_use]
+extern crate lazy_static;
+
+
 pub type Index = usize;
 
 // TODO: const generics
@@ -292,4 +297,155 @@ pub trait Solutions {
     /// Return true to keep looking for more solutions, or false to
     /// quit.
     fn push(&mut self, sol: Solution) -> bool;
+}
+
+#[cfg(test)]
+mod test {
+    use {Row, Solution, Solutions, Solver};
+
+    lazy_static! {
+        // Columns 0-8: cell(row,col) is filled (row*3 + col)
+        // Columns 9-17: num n in row r (9 + (n-1)*3 + r)
+        // Columns 18-16: num n in col c (18 + (n-1)*3 + c)
+        static ref LATIN_3X3_MATRIX: Vec<Row> = vec![
+            vec![0, 9, 18],
+            vec![1, 9, 19],
+            vec![2, 9, 20],
+            vec![3, 10, 18],
+            vec![4, 10, 19],
+            vec![5, 10, 20],
+            vec![6, 11, 18],
+            vec![7, 11, 19],
+            vec![8, 11, 20],
+            vec![0, 12, 21],
+            vec![1, 12, 22],
+            vec![2, 12, 23],
+            vec![3, 13, 21],
+            vec![4, 13, 22],
+            vec![5, 13, 23],
+            vec![6, 14, 21],
+            vec![7, 14, 22],
+            vec![8, 14, 23],
+            vec![0, 15, 24],
+            vec![1, 15, 25],
+            vec![2, 15, 26],
+            vec![3, 16, 24],
+            vec![4, 16, 25],
+            vec![5, 16, 26],
+            vec![6, 17, 24],
+            vec![7, 17, 25],
+            vec![8, 17, 26],
+        ];
+
+        // For compactness, solutions are represented here as vectors
+        // of indexes into LATIN_3X3_MATRIX.
+        static ref LATIN_3X3_SOLS: Vec<Row> = vec![
+            vec![0, 4, 8, 10, 14, 15, 20, 21, 25],
+            vec![0, 4, 8, 11, 12, 16, 19, 23, 24],
+            vec![0, 5, 7, 10, 12, 17, 20, 22, 24],
+            vec![0, 5, 7, 11, 13, 15, 19, 21, 26],
+            vec![1, 3, 8, 9, 14, 16, 20, 22, 24],
+            vec![1, 3, 8, 11, 13, 15, 18, 23, 25],
+            vec![1, 5, 6, 9, 13, 17, 20, 21, 25],
+            vec![1, 5, 6, 11, 12, 16, 18, 22, 26],
+            vec![2, 3, 7, 9, 13, 17, 19, 23, 24],
+            vec![2, 3, 7, 10, 14, 15, 18, 22, 26],
+            vec![2, 4, 6, 9, 14, 16, 19, 21, 26],
+            vec![2, 4, 6, 10, 12, 17, 18, 23, 25],
+        ];
+    }
+
+    struct LS3x3Solutions {
+        count: usize,
+        expected_count: usize,
+        sol_rows: Vec<Row>,
+    }
+
+    impl LS3x3Solutions {
+        fn new(expected_count: usize) -> LS3x3Solutions {
+            LS3x3Solutions {
+                count: 0,
+                sol_rows: Vec::new(),
+                expected_count,
+            }
+        }
+    }
+
+    impl Solutions for LS3x3Solutions {
+        fn push(&mut self, sols: Solution) -> bool {
+            let mut idxs = Vec::new();
+            for sol in sols {
+                let idx = LATIN_3X3_MATRIX.iter().position(|s| *s == sol);
+                assert!(idx.is_some(), format!("invalid row {:?}", sol));
+                idxs.push(idx.unwrap());
+            }
+            idxs.sort();
+            self.sol_rows.push(idxs.clone());
+            let ok = LATIN_3X3_SOLS.iter().find(|&i| *i == idxs);
+            assert!(ok.is_some(), format!("invalid rows {:?}", idxs));
+            self.count += 1;
+            if self.count > self.expected_count {
+                return false;
+            }
+            true
+        }
+    }
+
+    #[test]
+    fn latin_squares_3x3_all() {
+        let mut solver = Solver::new(27, LATIN_3X3_MATRIX.clone().into_iter());
+        let mut sols = LS3x3Solutions::new(12);
+        solver.solve(Vec::new(), &mut sols);
+        assert_eq!(12, sols.count);
+    }
+
+    #[test]
+    fn latin_squares_3x3_invalid_clue() {
+        let mut solver = Solver::new(27, LATIN_3X3_MATRIX.clone().into_iter());
+        let mut sols = LS3x3Solutions::new(0);
+        let clues = vec![
+            vec![0, 9, 18],  // 1 in top left       1--
+            vec![4, 13, 22], // 2 in center         -2-
+            vec![8, 11, 20], // 1 in bottom right   --1
+        ];
+        solver.solve(clues, &mut sols);
+        assert_eq!(0, sols.count);
+    }
+
+    #[test]
+    fn latin_squares_3x3_single() {
+        let mut solver = Solver::new(27, LATIN_3X3_MATRIX.clone().into_iter());
+        let mut sols = LS3x3Solutions::new(1);
+        let clues = vec![
+            vec![0, 9, 18], //  1--
+            //                  ---
+            vec![8, 14, 23], // --2
+        ];
+        solver.solve(clues, &mut sols);
+        assert_eq!(1, sols.count);
+        assert_eq!(vec![0, 5, 7, 10, 12, 17, 20, 22, 24], sols.sol_rows[0]);
+    }
+
+    #[test]
+    fn latin_squares_3x3_solver_reuse() {
+        let mut solver = Solver::new(27, LATIN_3X3_MATRIX.clone().into_iter());
+        let mut sols1 = LS3x3Solutions::new(1);
+        let clues1 = vec![
+            vec![0, 9, 18], //  1--
+            //                  ---
+            vec![8, 14, 23], // --2
+        ];
+        let mut sols2 = LS3x3Solutions::new(1);
+        let clues2 = vec![
+            vec![0, 12, 21], // 2--
+            //                  ---
+            vec![8, 11, 20], // --1
+        ];
+        solver.solve(clues1, &mut sols1);
+        solver.solve(clues2, &mut sols2);
+        assert_eq!(1, sols1.count);
+        assert_eq!(1, sols2.count);
+        assert_eq!(vec![0, 5, 7, 10, 12, 17, 20, 22, 24], sols1.sol_rows[0]);
+        assert_eq!(vec![1, 3, 8, 9, 14, 16, 20, 22, 24], sols2.sol_rows[0]);
+    }
 }
