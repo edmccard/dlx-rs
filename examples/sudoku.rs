@@ -5,7 +5,7 @@ use dlx::{Index, Row};
 /// Reads 9x9 sudoku clues in .sdm text format (one grid per
 /// 81-character line) and prints the solutions.
 fn main() {
-    let mut solver = dlx::Solver::new(324, sudoku_cover_matrix().into_iter());
+    let mut solver = dlx::Solver::new(324, SudokuMatrix::new());
     let stdin = ::std::io::stdin();
     let mut line = String::new();
     loop {
@@ -21,9 +21,9 @@ fn main() {
     }
 }
 
-const SIZE_RT: dlx::Index = 3;
-const SIZE: dlx::Index = 9;
-const SIZE_SQ: dlx::Index = 81;
+const SIZE_RT: Index = 3;
+const SIZE: Index = 9;
+const SIZE_SQ: Index = 81;
 
 /// Build a matrix that encodes 9x9 sudoku as an exact cover problem.
 ///
@@ -33,16 +33,40 @@ const SIZE_SQ: dlx::Index = 81;
 /// * 81 for "num n present in col c"
 /// * 81 for "num n present in row r"
 /// * 81 for "num n present in box b"
-fn sudoku_cover_matrix() -> Vec<Row> {
-    let mut matrix = Vec::new();
-    for num in 0..SIZE {
-        for row in 0..SIZE {
-            for col in 0..SIZE {
-                matrix.push(sudoku_cover_row(num, row, col));
-            }
+struct SudokuMatrix {
+    num: Index,
+    row: Index,
+    col: Index,
+}
+
+impl SudokuMatrix {
+    fn new() -> SudokuMatrix {
+        SudokuMatrix {
+            num: 0,
+            row: 0,
+            col: 0,
         }
     }
-    matrix
+}
+
+impl Iterator for SudokuMatrix {
+    type Item = Row;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.num >= SIZE {
+            return None;
+        }
+        let row = sudoku_cover_row(self.num, self.row, self.col);
+        self.col += 1;
+        if self.col == SIZE {
+            self.col = 0;
+            self.row += 1;
+            if self.row == SIZE {
+                self.row = 0;
+                self.num += 1;
+            }
+        }
+        Some(row)
+    }
 }
 
 /// Return the row representing the constraints satisfied by the
