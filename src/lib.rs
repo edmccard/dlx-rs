@@ -304,9 +304,11 @@ mod test {
     use {Row, Solution, Solutions, Solver};
 
     lazy_static! {
-        // Columns 0-8: cell(row,col) is filled (row*3 + col)
-        // Columns 9-17: num n in row r (9 + (n-1)*3 + r)
-        // Columns 18-16: num n in col c (18 + (n-1)*3 + c)
+        // Rows 0-26 ((num-1)*9 + row*3 + col): num in cell(row,col)
+        //
+        // Columns 0-8   (row*3 + col):      cell(row,col) is filled
+        // Columns 9-17  (9 + (n-1)*3 + r):  num n in row r
+        // Columns 18-16 (18 + (n-1)*3 + c): num n in col c
         static ref LATIN_3X3_MATRIX: Vec<Row> = vec![
             vec![0, 9, 18],
             vec![1, 9, 19],
@@ -338,20 +340,20 @@ mod test {
         ];
 
         // For compactness, solutions are represented here as vectors
-        // of indexes into LATIN_3X3_MATRIX.
+        // of sorted indexes into LATIN_3X3_MATRIX.
         static ref LATIN_3X3_SOLS: Vec<Row> = vec![
-            vec![0, 4, 8, 10, 14, 15, 20, 21, 25],
-            vec![0, 4, 8, 11, 12, 16, 19, 23, 24],
-            vec![0, 5, 7, 10, 12, 17, 20, 22, 24],
-            vec![0, 5, 7, 11, 13, 15, 19, 21, 26],
-            vec![1, 3, 8, 9, 14, 16, 20, 22, 24],
-            vec![1, 3, 8, 11, 13, 15, 18, 23, 25],
-            vec![1, 5, 6, 9, 13, 17, 20, 21, 25],
-            vec![1, 5, 6, 11, 12, 16, 18, 22, 26],
-            vec![2, 3, 7, 9, 13, 17, 19, 23, 24],
-            vec![2, 3, 7, 10, 14, 15, 18, 22, 26],
-            vec![2, 4, 6, 9, 14, 16, 19, 21, 26],
-            vec![2, 4, 6, 10, 12, 17, 18, 23, 25],
+            vec![0, 4, 8, 10, 14, 15, 20, 21, 25], // 123312231
+            vec![0, 4, 8, 11, 12, 16, 19, 23, 24], // 132213321
+            vec![0, 5, 7, 10, 12, 17, 20, 22, 24], // 123231312
+            vec![0, 5, 7, 11, 13, 15, 19, 21, 26], // 132321213
+            vec![1, 3, 8, 9, 14, 16, 20, 22, 24], //  213132321
+            vec![1, 3, 8, 11, 13, 15, 18, 23, 25], // 312123231
+            vec![1, 5, 6, 9, 13, 17, 20, 21, 25], //  213321132
+            vec![1, 5, 6, 11, 12, 16, 18, 22, 26], // 312231123
+            vec![2, 3, 7, 9, 13, 17, 19, 23, 24], //  231123312
+            vec![2, 3, 7, 10, 14, 15, 18, 22, 26], // 321132213
+            vec![2, 4, 6, 9, 14, 16, 19, 21, 26], //  231312123
+            vec![2, 4, 6, 10, 12, 17, 18, 23, 25], // 321213132
         ];
     }
 
@@ -404,9 +406,9 @@ mod test {
         let mut solver = Solver::new(27, LATIN_3X3_MATRIX.clone().into_iter());
         let mut sols = LS3x3Solutions::new(0);
         let clues = vec![
-            vec![0, 9, 18],  // 1 in top left       1--
-            vec![4, 13, 22], // 2 in center         -2-
-            vec![8, 11, 20], // 1 in bottom right   --1
+            vec![0, 9, 18],  // 1--
+            vec![4, 13, 22], // -2-
+            vec![8, 11, 20], // --1
         ];
         solver.solve(clues, &mut sols);
         assert_eq!(0, sols.count);
